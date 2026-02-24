@@ -21,10 +21,14 @@ export async function sendOtpEmail(to: string, code: string) {
     return;
   }
 
-  await resend.emails.send({
+  const response = await resend.emails.send({
     from: env.RESEND_FROM_EMAIL,
     to,
     subject,
     html,
   });
+
+  if (response.error) {
+    throw new Error(`[Resend:${response.error.name}] ${response.error.message}`);
+  }
 }
