@@ -25,8 +25,6 @@ const envSchema = z.object({
   AUDIT_HASH_SALT: optionalEnvString,
   RESEND_API_KEY: optionalEnvString,
   RESEND_FROM_EMAIL: optionalEnvString,
-  UPSTASH_REDIS_REST_URL: optionalEnvString,
-  UPSTASH_REDIS_REST_TOKEN: optionalEnvString,
   APP_URL: optionalUrl,
   INITIAL_ADMIN_EMAIL: optionalEnvString,
 });
