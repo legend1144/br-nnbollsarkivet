@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, IBM_Plex_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AppFooter } from "@/components/ui/app-footer";
 import "./globals.css";
@@ -53,6 +54,7 @@ export default function RootLayout({
             <AppFooter />
           </div>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
