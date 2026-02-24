@@ -15,13 +15,23 @@ export type RateLimitResult = {
 
 const memoryCounters = new Map<string, CounterEntry>();
 
-const redis =
-  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-        url: env.UPSTASH_REDIS_REST_URL,
-        token: env.UPSTASH_REDIS_REST_TOKEN,
-      })
-    : null;
+function createRedisClient() {
+  if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
+    return null;
+  }
+
+  try {
+    return new Redis({
+      url: env.UPSTASH_REDIS_REST_URL,
+      token: env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  } catch (error) {
+    console.error("[auth/rate-limit] Invalid Upstash Redis config. Falling back to in-memory limiter.", error);
+    return null;
+  }
+}
+
+const redis = createRedisClient();
 
 function nowMs() {
   return Date.now();
