@@ -1,0 +1,2 @@
+ALTER TABLE IF EXISTS "TacticBoard"
+DROP COLUMN IF EXISTS "polygonZonesData";

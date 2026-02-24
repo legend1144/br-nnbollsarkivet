@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS "TacticScenario";
+
+CREATE TABLE IF NOT EXISTS "TacticBoard" (
+  "key" TEXT PRIMARY KEY,
+  "playersData" JSONB NOT NULL,
+  "passChainsData" JSONB NOT NULL,
+  "polygonZonesData" JSONB NOT NULL,
+  "conesData" JSONB NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

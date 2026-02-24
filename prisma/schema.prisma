@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  member
+  referee
+  admin
+}
+
+enum PostStatus {
+  draft
+  published
+}
+
+enum EventType {
+  training
+  match
+}
+
+enum AuthEventType {
+  request_code
+  verify_code
+  logout
+}
+
+enum AuthOutcome {
+  success
+  failure
+  blocked
+}
+
+model User {
+  id             String      @id @default(cuid())
+  email          String      @unique
+  name           String?
+  role           Role        @default(member)
+  profileImageUrl String?
+  strengths      String?
+  weaknesses     String?
+  otherInfo      String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  sessions       Session[]
+  newsPosts      NewsPost[]  @relation("NewsAuthor")
+  archivePosts   ArchiveArticle[] @relation("ArchiveAuthor")
+  eventsCreated  CalendarEvent[]
+  authEvents     AuthEvent[]
+}
+
+model AllowedEmail {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  active    Boolean  @default(true)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OtpCode {
+  id          String    @id @default(cuid())
+  email       String
+  codeHash    String
+  expiresAt   DateTime
+  attemptCount Int      @default(0)
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([email, createdAt(sort: Desc)])
+  @@index([expiresAt])
+}
+
+model Session {
+  id          String    @id @default(cuid())
+  userId      String
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  ipHash      String?
+  userAgentHash String?
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([revokedAt])
+}
+
+model AuthEvent {
+  id            String       @id @default(cuid())
+  actorUserId   String?
+  type          AuthEventType
+  email         String?
+  ipHash        String?
+  userAgentHash String?
+  outcome       AuthOutcome
+  riskScore     Int          @default(0)
+  meta          Json?
+  createdAt     DateTime     @default(now())
+
+  actorUser     User?        @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([email, createdAt])
+  @@index([ipHash, createdAt])
+}
+
+model NewsPost {
+  id           String     @id @default(cuid())
+  slug         String     @unique
+  title        String
+  excerpt      String?
+  content      String
+  coverImageUrl String?
+  status       PostStatus @default(draft)
+  publishedAt  DateTime?
+  authorId     String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  author       User       @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([status, publishedAt])
+  @@index([createdAt])
+}
+
+model ArchiveArticle {
+  id           String     @id @default(cuid())
+  slug         String     @unique
+  title        String
+  content      String
+  category     String
+  status       PostStatus @default(draft)
+  publishedAt  DateTime?
+  authorId     String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  author       User       @relation("ArchiveAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  tags         ArchiveArticleTag[]
+
+  @@index([category, status, publishedAt])
+  @@index([createdAt])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  articles  ArchiveArticleTag[]
+}
+
+model ArchiveArticleTag {
+  articleId String
+  tagId     String
+
+  article   ArchiveArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@index([tagId])
+}
+
+model ArchiveTab {
+  id            String              @id @default(cuid())
+  slug          String              @unique
+  title         String
+  description   String?
+  introMarkdown String?
+  order         Int                 @default(0)
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  sections      ArchiveTabSection[]
+
+  @@index([order, isActive])
+}
+
+model ArchiveTabSection {
+  id           String     @id @default(cuid())
+  tabId        String
+  slug         String
+  title        String
+  bodyMarkdown String
+  order        Int        @default(0)
+  legacySlug   String?    @unique
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  tab          ArchiveTab @relation(fields: [tabId], references: [id], onDelete: Cascade)
+
+  @@unique([tabId, slug])
+  @@index([tabId, order])
+}
+
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  eventType   EventType
+  startAt     DateTime
+  endAt       DateTime
+  location    String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([startAt, endAt])
+  @@index([eventType])
+}
+
+model TacticBoard {
+  key              String   @id
+  playersData      Json
+  passChainsData   Json
+  conesData        Json
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

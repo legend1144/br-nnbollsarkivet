@@ -1,0 +1,49 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  DATABASE_URL: z.string().optional(),
+  AUTH_SESSION_SECRET: z.string().optional(),
+  OTP_HASH_SECRET: z.string().optional(),
+  AUDIT_HASH_SALT: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional(),
+  UPSTASH_REDIS_REST_URL: z.string().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  APP_URL: z.string().url().optional(),
+  INITIAL_ADMIN_EMAIL: z.string().optional(),
+});
+
+const parsed = envSchema.safeParse(process.env);
+if (!parsed.success) {
+  throw new Error(`Ogiltiga miljövariabler: ${parsed.error.message}`);
+}
+
+const sessionFallback = "dev-insecure-session-secret-change-me-please";
+const otpFallback = "dev-insecure-otp-secret-change-me-please";
+const auditFallback = "dev-insecure-audit-salt-change-me-please";
+
+export const env = {
+  ...parsed.data,
+  AUTH_SESSION_SECRET: parsed.data.AUTH_SESSION_SECRET ?? sessionFallback,
+  OTP_HASH_SECRET: parsed.data.OTP_HASH_SECRET ?? otpFallback,
+  AUDIT_HASH_SALT: parsed.data.AUDIT_HASH_SALT ?? auditFallback,
+  APP_URL: parsed.data.APP_URL ?? "http://localhost:3000",
+};
+
+export function assertServerEnv() {
+  if (!env.DATABASE_URL) {
+    throw new Error("DATABASE_URL saknas.");
+  }
+  if (env.NODE_ENV === "production") {
+    if (env.AUTH_SESSION_SECRET === sessionFallback) {
+      throw new Error("AUTH_SESSION_SECRET måste vara satt i produktion.");
+    }
+    if (env.OTP_HASH_SECRET === otpFallback) {
+      throw new Error("OTP_HASH_SECRET måste vara satt i produktion.");
+    }
+    if (env.AUDIT_HASH_SALT === auditFallback) {
+      throw new Error("AUDIT_HASH_SALT måste vara satt i produktion.");
+    }
+  }
+}
