@@ -28,7 +28,7 @@ export const env = {
   AUTH_SESSION_SECRET: parsed.data.AUTH_SESSION_SECRET ?? sessionFallback,
   OTP_HASH_SECRET: parsed.data.OTP_HASH_SECRET ?? otpFallback,
   AUDIT_HASH_SALT: parsed.data.AUDIT_HASH_SALT ?? auditFallback,
-  APP_URL: parsed.data.APP_URL ?? "http://localhost:3000",
+  APP_URL: parsed.data.APP_URL ?? "https://www.xn--brnnbollsarkivet-wnb.se",
 };
 
 export function assertServerEnv() {
