@@ -1,7 +1,20 @@
 import { Resend } from "resend";
 import { env } from "@/lib/env";
 
-const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+function createResendClient() {
+  if (!env.RESEND_API_KEY) {
+    return null;
+  }
+
+  try {
+    return new Resend(env.RESEND_API_KEY);
+  } catch (error) {
+    console.error("[auth/email] Invalid Resend config. Falling back to local OTP logging.", error);
+    return null;
+  }
+}
+
+const resend = createResendClient();
 
 export async function sendOtpEmail(to: string, code: string) {
   const subject = "Din verifieringskod för Brännbollsarkivet";

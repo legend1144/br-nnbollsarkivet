@@ -1,17 +1,34 @@
 import { z } from "zod";
 
+function normalizeOptionalEnv(value: unknown) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const withoutWrappingQuotes = trimmed.replace(/^['"]|['"]$/g, "").trim();
+  return withoutWrappingQuotes || undefined;
+}
+
+const optionalEnvString = z.preprocess((value) => normalizeOptionalEnv(value), z.string().optional());
+const optionalUrl = z.preprocess((value) => normalizeOptionalEnv(value), z.string().url().optional());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  DATABASE_URL: z.string().optional(),
-  AUTH_SESSION_SECRET: z.string().optional(),
-  OTP_HASH_SECRET: z.string().optional(),
-  AUDIT_HASH_SALT: z.string().optional(),
-  RESEND_API_KEY: z.string().optional(),
-  RESEND_FROM_EMAIL: z.string().optional(),
-  UPSTASH_REDIS_REST_URL: z.string().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
-  APP_URL: z.string().url().optional(),
-  INITIAL_ADMIN_EMAIL: z.string().optional(),
+  DATABASE_URL: optionalEnvString,
+  AUTH_SESSION_SECRET: optionalEnvString,
+  OTP_HASH_SECRET: optionalEnvString,
+  AUDIT_HASH_SALT: optionalEnvString,
+  RESEND_API_KEY: optionalEnvString,
+  RESEND_FROM_EMAIL: optionalEnvString,
+  UPSTASH_REDIS_REST_URL: optionalEnvString,
+  UPSTASH_REDIS_REST_TOKEN: optionalEnvString,
+  APP_URL: optionalUrl,
+  INITIAL_ADMIN_EMAIL: optionalEnvString,
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -28,7 +45,7 @@ export const env = {
   AUTH_SESSION_SECRET: parsed.data.AUTH_SESSION_SECRET ?? sessionFallback,
   OTP_HASH_SECRET: parsed.data.OTP_HASH_SECRET ?? otpFallback,
   AUDIT_HASH_SALT: parsed.data.AUDIT_HASH_SALT ?? auditFallback,
-  APP_URL: parsed.data.APP_URL ?? "https://www.xn--brnnbollsarkivet-wnb.se",
+  APP_URL: parsed.data.APP_URL ?? "http://localhost:3000",
 };
 
 export function assertServerEnv() {

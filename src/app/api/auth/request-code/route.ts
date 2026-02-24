@@ -1,15 +1,6 @@
 import { NextRequest } from "next/server";
-import { RATE_LIMITS, OTP_TTL_MS } from "@/lib/auth/constants";
-import { sendOtpEmail } from "@/lib/auth/email";
-import { generateOtpCode, hashOtp } from "@/lib/auth/otp";
-import { getRequestMeta, normalizeEmailForKey } from "@/lib/auth/request-meta";
-import { checkRateLimit } from "@/lib/auth/rate-limit";
-import { decideRisk, loadRecentFailures } from "@/lib/auth/risk";
-import { db } from "@/lib/db";
 import { ok } from "@/lib/http";
 import { requestCodeSchema } from "@/lib/validation";
-import { logAuthEvent } from "@/lib/auth/audit";
-import { sleep } from "@/lib/utils";
 
 const GENERIC_MESSAGE = "Om adressen är godkänd har en kod skickats.";
 
@@ -27,6 +18,28 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const [
+      { RATE_LIMITS, OTP_TTL_MS },
+      { sendOtpEmail },
+      { generateOtpCode, hashOtp },
+      { getRequestMeta, normalizeEmailForKey },
+      { checkRateLimit },
+      { decideRisk, loadRecentFailures },
+      { db },
+      { logAuthEvent },
+      { sleep },
+    ] = await Promise.all([
+      import("@/lib/auth/constants"),
+      import("@/lib/auth/email"),
+      import("@/lib/auth/otp"),
+      import("@/lib/auth/request-meta"),
+      import("@/lib/auth/rate-limit"),
+      import("@/lib/auth/risk"),
+      import("@/lib/db"),
+      import("@/lib/auth/audit"),
+      import("@/lib/utils"),
+    ]);
+
     const email = normalizeEmailForKey(parsed.data.email);
     const meta = getRequestMeta(request);
 
